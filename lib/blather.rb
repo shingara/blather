@@ -5,8 +5,9 @@
   nokogiri
   digest/md5
   logger
+  active_support/core_ext/class/inheritable_attributes
+  active_support/core_ext/object/blank
 
-  blather/core_ext/active_support
   blather/core_ext/nokogiri
 
   blather/errors
