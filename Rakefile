@@ -4,18 +4,19 @@ require 'rake'
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
-    gem.name = 'blather'
+    gem.name = 'shingara-blather'
     gem.summary = 'Simpler XMPP built for speed'
     gem.description = 'An XMPP DSL for Ruby written on top of EventMachine and Nokogiri'
 
     gem.email = 'sprsquish@gmail.com'
-    gem.homepage = 'http://github.com/sprsquish/blather'
-    gem.authors = ['Jeff Smick']
+    gem.homepage = 'http://github.com/shingara/blather'
+    gem.authors = ['Jeff Smick', 'Cyril Mougel']
 
     gem.rubyforge_project = 'squishtech'
 
     gem.add_dependency 'eventmachine', '>= 0.12.6'
     gem.add_dependency 'nokogiri', '>= 1.4.0'
+    gem.add_dependency 'active_support' '>=3.0.0.beta3'
 
     gem.files = FileList['examples/**/*', 'lib/**/*'].to_a
 
