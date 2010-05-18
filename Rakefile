@@ -16,7 +16,7 @@ begin
 
     gem.add_dependency 'eventmachine', '>= 0.12.6'
     gem.add_dependency 'nokogiri', '>= 1.4.0'
-    gem.add_dependency 'active_support' '>=3.0.0.beta3'
+    gem.add_dependency 'activesupport', '>= 3.0.0.beta3'
 
     gem.files = FileList['examples/**/*', 'lib/**/*'].to_a
 
