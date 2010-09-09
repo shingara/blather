@@ -2,10 +2,11 @@
 source :gemcutter
 #
 # gem "rails"
-gem 'activesupport', '3.0.0.beta3'
+gem 'activesupport'
 gem 'nokogiri'
 gem 'eventmachine'
 group :dev do
   gem 'rake'
+  gem 'minitest'
   gem 'jferris-mocha'
 end
