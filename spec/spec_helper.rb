@@ -3,6 +3,7 @@ $:.unshift File.expand_path(File.join(File.dirname(__FILE__), *%w[.. lib]))
 
 require 'blather'
 require 'rubygems'
+gem 'minitest', '>=1.7.1'
 require 'minitest/spec'
 require 'mocha'
 require 'mocha/expectation_error'
@@ -28,6 +29,33 @@ module MiniTest
       assert_equal(args[:by], (new_val - init_val), msg) if args[:by]
       assert_equal([args[:from], args[:to]], [(init_val if args[:from]), new_val], msg) if args[:to]
       refute_equal(init_val, new_val, msg) if args.empty?
+    end
+    
+    def assert_nothing_raised(*args)
+      self._assertions += 1
+      if Module === args.last
+        msg = nil
+      else
+        msg = args.pop
+      end
+      begin
+        line = __LINE__; yield
+      rescue Exception => e
+        bt = e.backtrace
+        as = e.instance_of?(MiniTest::Assertion)
+        if as
+          ans = /\A#{Regexp.quote(__FILE__)}:#{line}:in /o
+          bt.reject! {|ln| ans =~ ln}
+        end
+        if ((args.empty? && !as) ||
+            args.any? {|a| a.instance_of?(Module) ? e.is_a?(a) : e.class == a })
+          msg = message(msg) { "Exception raised:\n<#{mu_pp(e)}>" }
+          raise MiniTest::Assertion, msg.call, bt
+        else
+          raise
+        end
+      end
+      nil
     end
   end
 end

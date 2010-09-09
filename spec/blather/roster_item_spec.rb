@@ -65,7 +65,19 @@ describe Blather::RosterItem do
 
   it 'returns status based on priority' do
     setup_item_with_presences
-    @i.status.must_equal @p2
+    @i.status.must_equal @p3
+  end
+
+  it 'returns status based on priority and state' do
+    setup_item_with_presences
+
+    @p4 = Blather::Stanza::Presence::Status.new
+    @p4.type = :unavailable
+    @p4.from = 'n@d/d'
+    @p4.priority = 15
+    @i.status = @p4
+
+    @i.status.must_equal @p3
   end
 
   it 'returns status based on resource' do
@@ -85,12 +97,38 @@ describe Blather::RosterItem do
     @p2.from = 'n@d/b'
     @p2.priority = -1
 
+    @p3 = Blather::Stanza::Presence::Status.new(:dnd)
+    @p3.from = 'n@d/c'
+    @p3.priority = 10
+
     @i.status = @p
     @i.status = @p2
+    @i.status = @p3
+  end
+
+  it 'removes old unavailable presences' do
+    setup_item_with_presences
+
+    50.times do |i|
+      p = Blather::Stanza::Presence::Status.new
+      p.type = :unavailable
+      p.from = "n@d/#{i}"
+      @i.status = p
+    end
+
+    @i.statuses.size.must_equal 4
   end
 
   it 'initializes groups to [nil] if the item is not part of a group' do
     i = Blather::RosterItem.new 'n@d'
     i.groups.must_equal [nil]
+  end
+
+  it 'can determine equality' do
+    item1 = Blather::RosterItem.new 'n@d'
+    item2 = Blather::RosterItem.new 'n@d'
+    item1.groups = %w[group1 group2]
+    item2.groups = %w[group1 group2]
+    (item1 == item2).must_equal true
   end
 end

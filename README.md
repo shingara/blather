@@ -148,6 +148,17 @@ Command line options:
     -h, --help        Show this message
     -v, --version     Show version
 
+## Health warning:
+
+Some parts of Blather will allow you to do stupid things that don't conform to XMPP
+spec. You should exercise caution and read the relevant specifications (indicated in
+the preamble to most relevant classes).
+
+# Contributions
+
+All contributions are welcome, even encouraged. However, contributions must be
+well tested. If you send me a branch name to merge that'll get my attention faster
+than a change set made directly on master.
 
 # Author
 
@@ -155,7 +166,10 @@ Command line options:
 
 ### Contributors
 
-[Nolan Darilek](http://github.com/thewordnerd)
+* [Nolan Darilek](http://github.com/thewordnerd)
+* [Tim Carey-Smith](http://github.com/halorgium)
+* [Ben Langfeld](http://github.com/benlangfeld)
+* [Anton Mironov](http://github.com/mironov)
 
 # Copyright
 

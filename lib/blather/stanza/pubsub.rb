@@ -65,8 +65,6 @@ class Stanza
   # This fragment is found in many places throughout the pubsub spec
   # This is a convenience class to attach methods to the node
   class PubSubItem < XMPPNode
-    ATOM_NS = 'http://www.w3.org/2005/Atom'.freeze
-
     # Create a new PubSubItem
     #
     # @param [String, nil] id the id of the stanza
@@ -96,32 +94,22 @@ class Stanza
 
     # Get the item's payload
     #
-    # To get the XML representation use #entry
-    #
-    # @return [String, nil]
+    # @return [String, XMPPNode, nil]
     def payload
-      self.entry.content.empty? ? nil : content
+      children.empty? ? nil : children.to_s
     end
 
     # Set the item's payload
     #
-    # @param [String, nil] payload the payload
+    # @param [String, XMPPNode, nil] payload the payload
     def payload=(payload)
-      self.entry.content = payload
-    end
-
-    # Get or create the entry node
-    #
-    # @return [Blather::XMPPNode]
-    def entry
-      e = find_first('ns:entry', :ns => ATOM_NS) ||
-          find_first('entry', :ns => ATOM_NS)
-
-      unless e
-        self << (e = XMPPNode.new('entry', self.document))
-        e.namespace = ATOM_NS
+      children.map &:remove
+      return unless payload
+      if payload.is_a?(String)
+        self.content = payload
+      else
+        self << payload
       end
-      e
     end
   end  # PubSubItem
 

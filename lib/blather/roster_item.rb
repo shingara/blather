@@ -90,7 +90,7 @@ module Blather
     #
     # @param [Blather::Stanza::Status] the new status
     def status=(presence)
-      @statuses.delete_if { |s| s.from == presence.from }
+      @statuses.delete_if { |s| s.from == presence.from || s.state == :unavailable }
       @statuses << presence
       @statuses.sort!
     end
@@ -102,7 +102,7 @@ module Blather
       top = if resource
         @statuses.detect { |s| s.from.resource == resource }
       else
-        @statuses.first
+        @statuses.last
       end
     end
 
@@ -117,6 +117,17 @@ module Blather
       n.groups = groups
       r
     end
+
+    def <=>(o)
+      self.jid.to_s <=> o.jid.to_s
+    end
+
+    def eql?(o)
+      o.is_a?(RosterItem) &&
+      o.jid == self.jid &&
+      o.groups == self.groups
+    end
+    alias_method :==, :eql?
   end #RosterItem
 
 end

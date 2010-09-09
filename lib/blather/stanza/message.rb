@@ -159,6 +159,9 @@ class Stanza
   class Message < Stanza
     VALID_TYPES = [:chat, :error, :groupchat, :headline, :normal].freeze
 
+    VALID_CHAT_STATES = [:active, :composing, :gone, :inactive, :paused].freeze
+    CHAT_STATE_NS = 'http://jabber.org/protocol/chatstates'.freeze
+
     HTML_NS = 'http://jabber.org/protocol/xhtml-im'.freeze
     HTML_BODY_NS = 'http://www.w3.org/1999/xhtml'.freeze
 
@@ -172,7 +175,7 @@ class Stanza
         klass = class_from_registration(e.element_name, ns)
       end
 
-      if klass && klass != self
+      if klass && klass != self && klass != Blather::Stanza::X
         klass.import(node)
       else
         new(node[:type]).inherit(node)
@@ -189,7 +192,16 @@ class Stanza
       node.to = to
       node.type = type
       node.body = body
+      node.chat_state = :active if [:chat, :groupchat].include?(type)
       node
+    end
+
+    # Overrides the parent method to ensure the current chat state is removed
+    #
+    # @see Blather::Stanza::Iq#inherit
+    def inherit(node)
+      xpath('ns:*', :ns => CHAT_STATE_NS).remove
+      super
     end
 
     # Check if the Message is of type :chat
@@ -262,8 +274,9 @@ class Stanza
       end
 
       unless b = h.find_first('ns:body', :ns => HTML_BODY_NS)
-        h << (b = XMPPNode.new('body', self.document))
+        b = XMPPNode.new('body', self.document)
         b.namespace = HTML_BODY_NS
+        h << b
       end
 
       b
@@ -273,7 +286,7 @@ class Stanza
     #
     # @return [String]
     def xhtml
-      self.xhtml_node.content.strip
+      self.xhtml_node.inner_html.strip
     end
 
     # Set the message xhtml
@@ -281,7 +294,7 @@ class Stanza
     #
     # @param [#to_s] valid xhtml
     def xhtml=(xhtml_body)
-      self.xhtml_node.content = Nokogiri::XML(xhtml_body).to_xhtml
+      self.xhtml_node.inner_html = Nokogiri::XML::DocumentFragment.parse(xhtml_body)
     end
 
     # Get the message subject
@@ -325,6 +338,37 @@ class Stanza
       parent, thread = thread.to_a.flatten if thread.is_a?(Hash)
       set_content_for :thread, thread
       find_first('thread')[:parent] = parent
+    end
+
+    # Returns the message's x:data form child
+    def form
+      X.find_or_create self
+    end
+
+    # Get the message chat state
+    #
+    # @return [Symbol]
+    def chat_state
+      if (elem = find_first('ns:*', :ns => CHAT_STATE_NS)) && VALID_CHAT_STATES.include?(name = elem.name.to_sym)
+        name
+      end
+    end
+
+    # Set the message chat state
+    #
+    # @param [#to_s] chat_state the message chat state. Must be one of VALID_CHAT_STATES
+    def chat_state=(chat_state)
+      if chat_state && !VALID_CHAT_STATES.include?(chat_state.to_sym)
+        raise ArgumentError, "Invalid Chat State (#{chat_state}), use: #{VALID_CHAT_STATES*' '}"
+      end
+
+      xpath('ns:*', :ns => CHAT_STATE_NS).remove
+
+      if chat_state
+        state = XMPPNode.new(chat_state, self.document)
+        state.namespace = CHAT_STATE_NS
+        self << state
+      end
     end
   end
 

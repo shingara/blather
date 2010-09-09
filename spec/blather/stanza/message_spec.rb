@@ -1,21 +1,28 @@
 require File.join(File.dirname(__FILE__), *%w[.. .. spec_helper])
 
+def message_xml
+  <<-XML
+    <message
+        to='romeo@example.net'
+        from='juliet@example.com/balcony'
+        type='chat'
+        xml:lang='en'>
+      <body>Wherefore art thou, Romeo?</body>
+      <x xmlns='jabber:x:data' type='form'>
+        <field var='field-name' type='text-single' label='description' />
+      </x>
+      <paused xmlns="http://jabber.org/protocol/chatstates"/>
+    </message>
+  XML
+end
+
 describe Blather::Stanza::Message do
   it 'registers itself' do
     Blather::XMPPNode.class_from_registration(:message, nil).must_equal Blather::Stanza::Message
   end
 
   it 'must be importable' do
-    doc = parse_stanza <<-XML
-      <message
-          to='romeo@example.net'
-          from='juliet@example.com/balcony'
-          type='chat'
-          xml:lang='en'>
-        <body>Wherefore art thou, Romeo?</body>
-      </message>
-    XML
-    Blather::XMPPNode.import(doc.root).must_be_instance_of Blather::Stanza::Message
+    Blather::XMPPNode.import(parse_stanza(message_xml).root).must_be_instance_of Blather::Stanza::Message
   end
 
   it 'provides "attr_accessor" for body' do
@@ -103,8 +110,9 @@ describe Blather::Stanza::Message do
     msg = Blather::Stanza::Message.new
     msg << (h = Blather::XMPPNode.new('html', msg.document))
     h.namespace = Blather::Stanza::Message::HTML_NS
-    h << (b = Blather::XMPPNode.new('body', msg.document))
+    b = Blather::XMPPNode.new('body', msg.document)
     b.namespace = Blather::Stanza::Message::HTML_BODY_NS
+    h << b
 
     msg.xhtml_node.must_equal(b)
   end
@@ -113,14 +121,21 @@ describe Blather::Stanza::Message do
     msg = Blather::Stanza::Message.new
     xhtml = "<some>xhtml</some>"
     msg.xhtml = xhtml
-    msg.xhtml_node.content.strip.must_equal(xhtml)
+    msg.xhtml_node.inner_html.strip.must_equal(xhtml)
   end
 
   it 'sets valid xhtml even if the input is not valid' do
     msg = Blather::Stanza::Message.new
     xhtml = "<some>xhtml"
     msg.xhtml = xhtml
-    msg.xhtml_node.content.strip.must_equal("<some>xhtml</some>")
+    msg.xhtml_node.inner_html.strip.must_equal("<some>xhtml</some>")
+  end
+
+  it 'sets xhtml with more than one root node' do
+    msg = Blather::Stanza::Message.new
+    xhtml = "<i>xhtml</i> more xhtml"
+    msg.xhtml = xhtml
+    msg.xhtml_node.inner_html.strip.must_equal("<i>xhtml</i> more xhtml")
   end
 
   it 'has an xhtml getter' do
@@ -128,5 +143,65 @@ describe Blather::Stanza::Message do
     xhtml = "<some>xhtml</some>"
     msg.xhtml = xhtml
     msg.xhtml.must_equal(xhtml)
+  end
+
+  it 'has a chat state setter' do
+    msg = Blather::Stanza::Message.new
+    msg.chat_state = :composing
+    msg.xpath('ns:composing', :ns => Blather::Stanza::Message::CHAT_STATE_NS).wont_be_empty
+  end
+
+  it 'will only add one chat state at a time' do
+    msg = Blather::Stanza::Message.new
+    msg.chat_state = :composing
+    msg.chat_state = :paused
+
+    msg.xpath('ns:*', :ns => Blather::Stanza::Message::CHAT_STATE_NS).size.must_equal(1)
+  end
+  
+  it 'ensures chat state setter accepts strings' do
+    msg = Blather::Stanza::Message.new
+    msg.chat_state = "gone"
+    msg.xpath('ns:gone', :ns => Blather::Stanza::Message::CHAT_STATE_NS).wont_be_empty
+  end
+
+  it 'ensures chat state is one of Blather::Stanza::Message::VALID_CHAT_STATES' do
+    lambda do
+      msg = Blather::Stanza::Message.new
+      msg.chat_state = :invalid_chat_state
+    end.must_raise(Blather::ArgumentError)
+
+    Blather::Stanza::Message::VALID_CHAT_STATES.each do |valid_chat_state|
+      msg = Blather::Stanza::Message.new
+      msg.chat_state = valid_chat_state
+      msg.chat_state.must_equal valid_chat_state
+    end
+  end
+
+  it 'has a chat state getter' do
+    msg = Blather::Stanza::Message.new
+    msg.chat_state = :paused
+    msg.chat_state.must_equal(:paused)
+  end
+
+  it 'imports correct chat state' do
+    Blather::XMPPNode.import(parse_stanza(message_xml).root).chat_state.must_equal :paused
+  end
+
+  it 'makes a form child available' do
+    n = Blather::XMPPNode.import(parse_stanza(message_xml).root)
+    n.form.fields.size.must_equal 1
+    n.form.fields.map { |f| f.class }.uniq.must_equal [Blather::Stanza::X::Field]
+    n.form.must_be_instance_of Blather::Stanza::X
+
+    r = Blather::Stanza::Message.new
+    r.form.type = :form
+    r.form.type.must_equal :form
+  end
+
+  it 'ensures the form child is a direct child' do
+    r = Blather::Stanza::Message.new
+    r.form
+    r.xpath('ns:x', :ns => Blather::Stanza::X.registered_ns).wont_be_empty
   end
 end

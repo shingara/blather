@@ -45,7 +45,7 @@ describe Blather::Stream::Client do
 
   it 'attempts to find the SRV record if a host is not provided' do
     dns = mock(:sort! => nil, :empty? => false)
-    dns.expects(:each).yields(mock({
+    dns.expects(:detect).yields(mock({
       :target => 'd',
       :port => 5222
     }))
@@ -1006,6 +1006,19 @@ describe Blather::Stream::Client do
     msg = Blather::Stanza::Message.new 'to@jid.com', 'body'
     comp = Blather::Stream::Client.new nil, client, 'node@jid.com/resource', 'pass'
     comp.expects(:send_data).with { |s| s.wont_match(/^<message[^>]*from=/); true }
+    comp.send msg
+  end
+  
+  it 'sends xml without formatting' do
+    client = mock()
+    client.stubs(:jid)
+    client.stubs(:jid=)
+    
+    msg = Blather::Stanza::Message.new 'to@jid.com', 'body'
+    msg.xhtml = '<i>xhtml</i> body'
+
+    comp = Blather::Stream::Client.new nil, client, 'node@jid.com/resource', 'pass'
+    comp.expects(:send_data).with { |s| s.wont_match(/\n/); true }
     comp.send msg
   end
 end

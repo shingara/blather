@@ -12,4 +12,5 @@ rdoc
 *.pid
 notes
 .yardoc
-blather.gemspec
+*.rbc
+lib/.DS_Store

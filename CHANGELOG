@@ -1,3 +1,32 @@
+v0.4.14
+  Tests: get specs fully passing on rubinius
+  Feature(mironov): Implement XEP-0085 Chat State Notifications
+  Bugfix(mironov): send stanzas unformatted
+	Bugfix(mironov): Message#xhtml uses inner_html so tags aren't escaped
+	Bugfix(mironov): Message#xhtml= now works with multiple root nodes
+
+v0.4.13
+  Bugfix: Place form child of command inside command element
+
+v0.4.12
+  API Change: Switch order of var and type arguments to X::Field.new since var is always required but type is not
+  API Change: PubSub payloads can be strings or nodes and can be set nil. PubSub#payload will always return a string
+  Feature: Add forms to Message stanzas
+
+v0.4.11
+  Bugfix: command nodes where generating the wrong xml
+  Bugfix: x nodes where generating the wrong xml
+  Feature: ability to set identities and features on disco info nodes
+  Feature: ability to set items on disco item nodes
+
+v0.4.10
+  no change
+
+v0.4.9
+  Feature: XEP-0004 x:data (benlangfeld)
+  Feature: XEP-0050 Ad-Hoc commands (benlangfeld)
+  Minor bugfixes for the specs
+
 v0.4.8
   Feature: add xhtml getter/setter to Message stanza
   Bugfix: heirarchy -> hierarchy spelling mistake
